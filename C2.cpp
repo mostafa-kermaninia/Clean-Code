@@ -1,11 +1,8 @@
-#include <iterator>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <string>
-#include <numeric>
-#include <algorithm>
 
 using namespace std;
 
