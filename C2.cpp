@@ -6,13 +6,13 @@
 
 using namespace std;
 
-struct P_INFO
+struct Place
 {
-    vector<string> name;
-    vector<int> openingTime;
-    vector<int> closingTime;
-    vector<int> rank;
-    vector<int> visited;
+    string name;
+    int openingTime;
+    int closingTime;
+    int rank;
+    int visited;
 };
 
 int number_of_places_finder(vector<string> readed_string)
@@ -39,24 +39,27 @@ int string_to_minutes(string string_time)
     return minutes;
 }
 
-P_INFO string_to_struct(vector<string> input_string)
+vector<Place> string_to_struct_vector(vector<string> input_string)
 {
-    P_INFO place_info;
+    vector<Place> places_info;
     int number_of_places = number_of_places_finder(input_string);
     vector<int> order_of_informations = order_of_informations_finder(input_string);
     for (int i = 1; i <= number_of_places; i++)
     {
-        place_info.name.push_back(input_string[order_of_informations[0] + i * 4]);
-        place_info.openingTime.push_back(string_to_minutes(input_string[order_of_informations[1] + i * 4]));
-        place_info.closingTime.push_back(string_to_minutes(input_string[order_of_informations[2] + i * 4]));
-        int rank = stoi(input_string[order_of_informations[3] + i * 4]);
-        place_info.rank.push_back(rank);
-        place_info.visited.push_back(0);
+        Place place_info;
+
+        place_info.name = input_string[order_of_informations[0] + i * 4];
+        place_info.openingTime = string_to_minutes(input_string[order_of_informations[1] + i * 4]);
+        place_info.closingTime = string_to_minutes(input_string[order_of_informations[2] + i * 4]);
+        place_info.rank = stoi(input_string[order_of_informations[3] + i * 4]);
+        place_info.visited = 0;
+
+        places_info.push_back(place_info);
     }
-    return place_info;
+    return places_info;
 }
 
-P_INFO input_read(string input_address)
+vector<Place> input_read(string input_address)
 {
     vector<string> readed_file;
     string filename = input_address;
@@ -71,8 +74,8 @@ P_INFO input_read(string input_address)
             readed_file.push_back(file_element);
     }
     input_file.close();
-    P_INFO place_info = string_to_struct(readed_file);
-    return place_info;
+    vector<Place> places_info = string_to_struct_vector(readed_file);
+    return places_info;
 }
 
 string minutes_to_string(int input)
@@ -98,94 +101,94 @@ string minutes_to_string(int input)
     return result;
 }
 
-void output_printer(int start, int finnish, P_INFO place_info, int place_index)
+void output_printer(int start, int finnish, vector<Place> places_info, int place_index)
 {
-    cout << "Location " << place_info.name[place_index] << endl;
+    cout << "Location " << places_info[place_index].name << endl;
     cout << "Visit from " << minutes_to_string(start) << " until ";
     cout << minutes_to_string(finnish) << endl
          << "---" << endl;
 }
 
-bool this_is_open(int &start, int i, P_INFO place_info)
+bool this_is_open(int &start, int i, vector<Place> places_info)
 {
-    if (start >= place_info.openingTime[i] && start <= place_info.closingTime[i])
+    if (start >= places_info[i].openingTime && start <= places_info[i].closingTime)
         return true;
     else
         return false;
 }
 
-bool this_is_visitable(int &start, int i, P_INFO place_info)
+bool this_is_visitable(int &start, int i, vector<Place> places_info)
 {
-    if (start + 30 + 15 <= place_info.closingTime[i])
+    if (start + 30 + 15 <= places_info[i].closingTime)
         return true;
     else
         return false;
 }
 
-int change_visit_index(int start, int visit_index, int i, P_INFO place_info)
+int change_visit_index(int start, int visit_index, int i, vector<Place> places_info)
 {
     if (visit_index == -1)
         return i;
     else
     {
-        if (start >= place_info.openingTime[i])
-            if (place_info.rank[i] < place_info.rank[visit_index])
+        if (start >= places_info[i].openingTime)
+            if (places_info[i].rank < places_info[visit_index].rank)
                 return i;
             else
                 return visit_index;
         else
         {
-            if (place_info.openingTime[i] < place_info.openingTime[visit_index])
+            if (places_info[i].openingTime < places_info[visit_index].openingTime)
                 return i;
-            if (place_info.openingTime[i] == place_info.openingTime[visit_index])
-                if (place_info.rank[i] < place_info.rank[visit_index])
+            if (places_info[i].openingTime == places_info[visit_index].openingTime)
+                if (places_info[i].rank < places_info[visit_index].rank)
                     return i;
             return visit_index;
         }
     }
 }
 
-void change_start_finnish(int &start, int &finnish, P_INFO place_info, int visit_index)
+void change_start_finnish(int &start, int &finnish, vector<Place> places_info, int visit_index)
 {
-    if (start + 30 < place_info.openingTime[visit_index])
-        start = place_info.openingTime[visit_index];
+    if (start + 30 < places_info[visit_index].openingTime)
+        start = places_info[visit_index].openingTime;
     else
         start += 30;
 
-    if (place_info.closingTime[visit_index] - start >= 60)
+    if (places_info[visit_index].closingTime - start >= 60)
         finnish = start + 60;
     else
-        finnish = place_info.closingTime[visit_index];
+        finnish = places_info[visit_index].closingTime;
 }
 
-int visit_place_index(int &start, int &finnish, P_INFO &place_info)
+int visit_place_index(int &start, int &finnish, vector<Place> &places_info)
 {
     int visit_index = -1;
-    for (int i = 0; i < place_info.name.size(); i++)
-        if (this_is_open(start, i, place_info) && this_is_visitable(start, i, place_info) && place_info.visited[i] == 0)
-            visit_index = change_visit_index(start, visit_index, i, place_info);
+    for (int i = 0; i < places_info.size(); i++)
+        if (this_is_open(start, i, places_info) && this_is_visitable(start, i, places_info) && places_info[i].visited == 0)
+            visit_index = change_visit_index(start, visit_index, i, places_info);
     if (visit_index == -1)
-        for (int i = 0; i < place_info.name.size(); i++)
-            if (start < place_info.openingTime[i] && this_is_visitable(start, i, place_info) && place_info.visited[i] == 0)
-                visit_index = change_visit_index(start, visit_index, i, place_info);
+        for (int i = 0; i < places_info.size(); i++)
+            if (start < places_info[i].openingTime && this_is_visitable(start, i, places_info) && places_info[i].visited == 0)
+                visit_index = change_visit_index(start, visit_index, i, places_info);
     if (visit_index >= 0)
     {
-        place_info.visited[visit_index] = 1;
-        change_start_finnish(start, finnish, place_info, visit_index);
+        places_info[visit_index].visited = 1;
+        change_start_finnish(start, finnish, places_info, visit_index);
     }
     return visit_index;
 }
 
 int main(int argc, char *argv[])
 {
-    P_INFO place_info = input_read(argv[1]);
+    vector<Place> places_info = input_read(argv[1]);
     int finnish = 8 * 60, start = 8 * 60 - 30;
-    int index_of_place_to_visit = visit_place_index(start, finnish, place_info);
+    int index_of_place_to_visit = visit_place_index(start, finnish, places_info);
     while (index_of_place_to_visit != -1)
     {
-        output_printer(start, finnish, place_info, index_of_place_to_visit);
+        output_printer(start, finnish, places_info, index_of_place_to_visit);
         start = finnish;
-        index_of_place_to_visit = visit_place_index(start, finnish, place_info);
+        index_of_place_to_visit = visit_place_index(start, finnish, places_info);
     }
     return 0;
 }
