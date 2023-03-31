@@ -6,15 +6,6 @@
 
 using namespace std;
 
-const string LOCK = "Location ";
-const string NAME = "name";
-const string OPENINGTIME = "openingTime";
-const string CLOSINGTIME = "closingTime";
-const string RANK = "rank";
-const string END_PRINT = "---";
-const string VISIT_FROM = "Visit from ";
-const string UNTIL = " until ";
-
 struct P_INFO
 {
     vector<string> name;
@@ -33,7 +24,7 @@ int number_of_places_finder(vector<string> readed_string)
 vector<int> order_of_informations_finder(vector<string> readed_string)
 {
     vector<int> order_of_informations;
-    vector<string> info = {NAME, OPENINGTIME, CLOSINGTIME, RANK};
+    vector<string> info = {"name", "openingTime", "closingTime", "rank"};
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             if (info[i] == readed_string[j])
@@ -109,10 +100,10 @@ string minutes_to_string(int input)
 
 void output_printer(int start, int finnish, P_INFO place_info, int place_index)
 {
-    cout << LOCK << place_info.name[place_index] << endl;
-    cout << VISIT_FROM << minutes_to_string(start) << UNTIL;
+    cout << "Location " << place_info.name[place_index] << endl;
+    cout << "Visit from " << minutes_to_string(start) << " until ";
     cout << minutes_to_string(finnish) << endl
-         << END_PRINT << endl;
+         << "---" << endl;
 }
 
 bool this_is_open(int &start, int i, P_INFO place_info)
