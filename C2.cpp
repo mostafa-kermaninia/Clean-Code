@@ -6,6 +6,22 @@
 
 using namespace std;
 
+#define NOT_FOUND -1
+#define PLACE_PROPERTIES_COUNT 4
+#define TITLE_ROW 1
+#define FILE_PATH_INDEX 1
+
+#define NAME_INDEX 0
+#define OPENING_TIME_INDEX 1
+#define CLOSING_TIME_INDEX 2
+#define RANK_INDEX 3
+
+#define START_TIME 8
+#define MINUTES_OF_AN_HOUR 60
+#define MOVE_DURATION 30
+#define MIN_VISIT_TIME 15
+#define MAX_VISIT_TIME 60
+
 struct Place
 {
     string name;
@@ -17,17 +33,17 @@ struct Place
 
 int number_of_places_finder(vector<string> splittedInput)
 {
-    int numOfPlaces = splittedInput.size() / 4 - 1;
+    int numOfPlaces = splittedInput.size() / PLACE_PROPERTIES_COUNT - TITLE_ROW;
     return numOfPlaces;
 }
 
 vector<int> order_of_informations_finder(vector<string> splittedInput)
 {
     vector<int> orderOfInfo;
-    vector<string> info = {"name", "openingTime", "closingTime", "rank"};
-    for (int placeIndex = 0; placeIndex < 4; placeIndex++)
-        for (int j = 0; j < 4; j++)
-            if (info[placeIndex] == splittedInput[j])
+    vector<string> properties = {"name", "openingTime", "closingTime", "rank"};
+    for (int i = 0; i < PLACE_PROPERTIES_COUNT; i++)
+        for (int j = 0; j < PLACE_PROPERTIES_COUNT; j++)
+            if (properties[i] == splittedInput[j])
                 orderOfInfo.push_back(j);
     return orderOfInfo;
 }
@@ -35,7 +51,7 @@ vector<int> order_of_informations_finder(vector<string> splittedInput)
 int string_to_minutes(string stringTime)
 {
     int minutes = 0;
-    minutes = stoi(stringTime.substr(0, 2)) * 60 + stoi(stringTime.substr(3, 2));
+    minutes = stoi(stringTime.substr(0, 2)) * MINUTES_OF_AN_HOUR + stoi(stringTime.substr(3, 2));
     return minutes;
 }
 
@@ -47,26 +63,24 @@ vector<Place> string_to_struct_vector(vector<string> inputString)
     for (int placeIndex = 1; placeIndex <= numberOfPlaces; placeIndex++)
     {
         Place curPlace;
-
-        curPlace.name = inputString[orderOfInformations[0] + placeIndex * 4];
-        curPlace.openingTime = string_to_minutes(inputString[orderOfInformations[1] + placeIndex * 4]);
-        curPlace.closingTime = string_to_minutes(inputString[orderOfInformations[2] + placeIndex * 4]);
-        curPlace.rank = stoi(inputString[orderOfInformations[3] + placeIndex * 4]);
-        curPlace.visited = 0;
+        curPlace.name = inputString[orderOfInformations[NAME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT];
+        curPlace.openingTime = string_to_minutes(inputString[orderOfInformations[OPENING_TIME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
+        curPlace.closingTime = string_to_minutes(inputString[orderOfInformations[CLOSING_TIME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
+        curPlace.rank = stoi(inputString[orderOfInformations[RANK_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
+        curPlace.visited = false;
 
         placesInfo.push_back(curPlace);
     }
     return placesInfo;
 }
 
-vector<Place> input_read(string fileAddress)
+vector<Place> input_read(string filePath)
 {
     vector<string> readFile;
-    ifstream inputFile(fileAddress);
+    ifstream inputFile(filePath);
     string lineOfFile;
     while (getline(inputFile, lineOfFile))
     {
-
         istringstream line(lineOfFile);
         string fileElement;
         while (getline(line, fileElement, ','))
@@ -80,7 +94,7 @@ vector<Place> input_read(string fileAddress)
 string minutes_to_string(int input)
 {
     string result = "";
-    int hours = input / 60, minutes = input % 60;
+    int hours = input / MINUTES_OF_AN_HOUR, minutes = input % MINUTES_OF_AN_HOUR;
 
     if (hours >= 10)
         result += to_string(hours);
@@ -118,7 +132,7 @@ bool this_is_open(int &curTime, int placeIndex, vector<Place> placesInfo)
 
 bool this_is_visitable(int &curTime, int placeIndex, vector<Place> placesInfo)
 {
-    if (curTime + 30 + 15 <= placesInfo[placeIndex].closingTime)
+    if (curTime + MOVE_DURATION + MIN_VISIT_TIME <= placesInfo[placeIndex].closingTime)
         return true;
     else
         return false;
@@ -126,7 +140,7 @@ bool this_is_visitable(int &curTime, int placeIndex, vector<Place> placesInfo)
 
 int change_visit_index(int curTime, int visitIndex, int placeIndex, vector<Place> placesInfo)
 {
-    if (visitIndex == -1)
+    if (visitIndex == NOT_FOUND)
         return placeIndex;
     else
     {
@@ -149,30 +163,30 @@ int change_visit_index(int curTime, int visitIndex, int placeIndex, vector<Place
 
 void change_start_finish(int &start, int &finishTime, vector<Place> placesInfo, int visitIndex)
 {
-    if (start + 30 < placesInfo[visitIndex].openingTime)
+    if (start + MOVE_DURATION < placesInfo[visitIndex].openingTime)
         start = placesInfo[visitIndex].openingTime;
     else
-        start += 30;
+        start += MOVE_DURATION;
 
-    if (placesInfo[visitIndex].closingTime - start >= 60)
-        finishTime = start + 60;
+    if (placesInfo[visitIndex].closingTime - start >= MAX_VISIT_TIME)
+        finishTime = start + MAX_VISIT_TIME;
     else
         finishTime = placesInfo[visitIndex].closingTime;
 }
 
 int visit_place_index(int &curTime, int &finishTime, vector<Place> &placesInfo)
 {
-    int visitIndex = -1;
+    int visitIndex = NOT_FOUND;
     for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-        if (this_is_open(curTime, placeIndex, placesInfo) && this_is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == 0)
+        if (this_is_open(curTime, placeIndex, placesInfo) && this_is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
             visitIndex = change_visit_index(curTime, visitIndex, placeIndex, placesInfo);
-    if (visitIndex == -1)
+    if (visitIndex == NOT_FOUND)
         for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-            if (curTime < placesInfo[placeIndex].openingTime && this_is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == 0)
+            if (curTime < placesInfo[placeIndex].openingTime && this_is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
                 visitIndex = change_visit_index(curTime, visitIndex, placeIndex, placesInfo);
     if (visitIndex >= 0)
     {
-        placesInfo[visitIndex].visited = 1;
+        placesInfo[visitIndex].visited = true;
         change_start_finish(curTime, finishTime, placesInfo, visitIndex);
     }
     return visitIndex;
@@ -180,10 +194,10 @@ int visit_place_index(int &curTime, int &finishTime, vector<Place> &placesInfo)
 
 int main(int argc, char *argv[])
 {
-    vector<Place> placesInfo = input_read(argv[1]);
-    int endOfVisit = 8 * 60, startOfCurVisit = 8 * 60 - 30;
+    vector<Place> placesInfo = input_read(argv[FILE_PATH_INDEX]);
+    int endOfVisit = START_TIME * MINUTES_OF_AN_HOUR, startOfCurVisit = START_TIME * MINUTES_OF_AN_HOUR - MOVE_DURATION;
     int indexOfPlaceToVisit = visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
-    while (indexOfPlaceToVisit != -1)
+    while (indexOfPlaceToVisit != NOT_FOUND)
     {
         output_printer(startOfCurVisit, endOfVisit, placesInfo, indexOfPlaceToVisit);
         startOfCurVisit = endOfVisit;
