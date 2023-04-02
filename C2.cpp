@@ -124,12 +124,15 @@ string convert_minutes_to_string(int input)
     return result;
 }
 
-void print_output(int startOfVisitingTime, int endOfVisitingTime, vector<Place> placesInfo, int placeIndex)
+void print_output(vector<VisitDetails> visits)
 {
-    cout << "Location " << placesInfo[placeIndex].name << endl;
-    cout << "Visit from " << convert_minutes_to_string(startOfVisitingTime) << " until ";
-    cout << convert_minutes_to_string(endOfVisitingTime) << endl
-         << "---" << endl;
+    for (int i = 0; i < visits.size(); i++)
+    {
+        cout << "Location " << visits[i].placeName << endl;
+        cout << "Visit from " << convert_minutes_to_string(visits[i].visitDuration.first) << " until "
+             << convert_minutes_to_string(visits[i].visitDuration.second) << endl;
+        cout << "---" << endl;
+    }
 }
 
 bool is_open(int &curTime, int placeIndex, vector<Place> placesInfo)
@@ -202,16 +205,34 @@ int find_visit_place_index(int &curTime, int &finishTime, vector<Place> &placesI
     return visitIndex;
 }
 
-int main(int argc, char *argv[])
+VisitDetails build_visit_struct(pair<int, int> visitDuration, string placeName)
 {
-    vector<Place> placesInfo = read_input(argv[FILE_PATH_INDEX]);
-    int endOfVisit = START_TIME * MINUTES_OF_AN_HOUR, startOfCurVisit = START_TIME * MINUTES_OF_AN_HOUR - MOVE_DURATION;
+    VisitDetails newVisit;
+    newVisit.placeName = placeName;
+    newVisit.visitDuration = visitDuration;
+    return newVisit;
+}
+
+vector<VisitDetails> build_visit_schedule(vector<Place> &placesInfo)
+{
+    vector<VisitDetails> visitsInfo;
+    int startOfCurVisit = START_TIME * MINUTES_OF_AN_HOUR - MOVE_DURATION;
+    int endOfVisit = START_TIME * MINUTES_OF_AN_HOUR;
     int indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
     while (indexOfPlaceToVisit != NOT_FOUND)
     {
-        print_output(startOfCurVisit, endOfVisit, placesInfo, indexOfPlaceToVisit);
+        string placeName = placesInfo[indexOfPlaceToVisit].name;
+        visitsInfo.push_back(build_visit_struct({startOfCurVisit, endOfVisit}, placeName));
         startOfCurVisit = endOfVisit;
         indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
     }
+    return visitsInfo;
+}
+
+int main(int argc, char *argv[])
+{
+    vector<Place> placesInfo = read_input(argv[FILE_PATH_INDEX]);
+    vector<VisitDetails> visits = build_visit_schedule(placesInfo);
+    print_output(visits);
     return 0;
 }
