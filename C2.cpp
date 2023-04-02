@@ -63,20 +63,25 @@ int convert_string_to_minutes(string stringTime)
     return minutes;
 }
 
-vector<Place> convert_strvec_to_structvec(vector<string> inputString)
+Place convert_strings_to_place(vector<string> stringVec, int placeNum, vector<int> orderOfInformations)
+{
+    Place finalPlace;
+    finalPlace.name = stringVec[orderOfInformations[NAME_INDEX] + placeNum * PLACE_PROPERTIES_COUNT];
+    finalPlace.openingTime = convert_string_to_minutes(stringVec[orderOfInformations[OPENING_TIME_INDEX] + placeNum * PLACE_PROPERTIES_COUNT]);
+    finalPlace.closingTime = convert_string_to_minutes(stringVec[orderOfInformations[CLOSING_TIME_INDEX] + placeNum * PLACE_PROPERTIES_COUNT]);
+    finalPlace.rank = stoi(stringVec[orderOfInformations[RANK_INDEX] + placeNum * PLACE_PROPERTIES_COUNT]);
+    finalPlace.visited = false;
+    return finalPlace;
+}
+
+vector<Place> convert_to_place_vec(vector<string> inputString)
 {
     vector<Place> placesInfo;
     int numberOfPlaces = find_number_of_places(inputString.size());
     vector<int> orderOfInformations = find_order_of_informations(inputString);
-    for (int placeIndex = 1; placeIndex <= numberOfPlaces; placeIndex++)
+    for (int i = 1; i <= numberOfPlaces; i++)
     {
-        Place curPlace;
-        curPlace.name = inputString[orderOfInformations[NAME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT];
-        curPlace.openingTime = convert_string_to_minutes(inputString[orderOfInformations[OPENING_TIME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
-        curPlace.closingTime = convert_string_to_minutes(inputString[orderOfInformations[CLOSING_TIME_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
-        curPlace.rank = stoi(inputString[orderOfInformations[RANK_INDEX] + placeIndex * PLACE_PROPERTIES_COUNT]);
-        curPlace.visited = false;
-
+        Place curPlace = convert_strings_to_place(inputString, i, orderOfInformations);
         placesInfo.push_back(curPlace);
     }
     return placesInfo;
@@ -95,7 +100,7 @@ vector<Place> read_input(string filePath)
             readFile.push_back(fileElement);
     }
     inputFile.close();
-    vector<Place> placesInfo = convert_strvec_to_structvec(readFile);
+    vector<Place> placesInfo = convert_to_place_vec(readFile);
     return placesInfo;
 }
 
