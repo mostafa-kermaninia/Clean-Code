@@ -108,72 +108,65 @@ vector<Place> read_input(string filePath)
     return placesInfo;
 }
 
-bool is_open(int &curTime, Place curPlace)
-{
-    if (curTime >= curPlace.workingTime.first && curTime <= curPlace.workingTime.second)
-        return true;
-    else
-        return false;
-}
-
-bool is_visitable(int &curTime, Place curPlace)
-{
-    if (curTime + MOVE_DURATION + MIN_VISIT_TIME <= curPlace.workingTime.second)
-        return true;
-    else
-        return false;
-}
-
-int refind_selected_place_index(int curTime, int selectedPlaceIndex, int placeIndex, vector<Place> placesInfo)
+int compare_open_places(int selectedPlaceIndex, int curPlaceIndex, vector<Place> placesInfo)
 {
     if (selectedPlaceIndex == NOT_FOUND)
-        return placeIndex;
-    else
-    {
-        if (curTime >= placesInfo[placeIndex].workingTime.first)
-            if (placesInfo[placeIndex].rank < placesInfo[selectedPlaceIndex].rank)
-                return placeIndex;
-            else
-                return selectedPlaceIndex;
-        else
-        {
-            if (placesInfo[placeIndex].workingTime.first < placesInfo[selectedPlaceIndex].workingTime.first)
-                return placeIndex;
-            if (placesInfo[placeIndex].workingTime.first == placesInfo[selectedPlaceIndex].workingTime.first)
-                if (placesInfo[placeIndex].rank < placesInfo[selectedPlaceIndex].rank)
-                    return placeIndex;
-            return selectedPlaceIndex;
-        }
-    }
+        return curPlaceIndex;
+
+    Place curPlace = placesInfo[curPlaceIndex];
+    Place selectedPlace = placesInfo[selectedPlaceIndex];
+    if (curPlace.rank < selectedPlace.rank)
+        return curPlaceIndex;
+    return selectedPlaceIndex;
 }
 
-void change_start_finish_time(int &start, int &finishTime, Place curPlace)
+int compare_still_closed_places(int selectedPlaceIndex, int curPlaceIndex, vector<Place> placesInfo)
 {
-    if (start + MOVE_DURATION < curPlace.workingTime.first)
-        start = curPlace.workingTime.first;
+    if (selectedPlaceIndex == NOT_FOUND)
+        return curPlaceIndex;
     else
-        start += MOVE_DURATION;
+    {
+        Place curPlace = placesInfo[curPlaceIndex];
+        Place selectedPlace = placesInfo[selectedPlaceIndex];
+        if (curPlace.workingTime.first < selectedPlace.workingTime.first)
+            return curPlaceIndex;
+        if (curPlace.workingTime.first == selectedPlace.workingTime.first && curPlace.rank < selectedPlace.rank)
+            return curPlaceIndex;
+    }
+    return selectedPlaceIndex;
+}
 
-    if (curPlace.workingTime.second - start >= MAX_VISIT_TIME)
-        finishTime = start + MAX_VISIT_TIME;
-    else
-        finishTime = curPlace.workingTime.second;
+bool is_visitable(int curTime, Place selectedPlace)
+{
+    if (curTime + MOVE_DURATION + MIN_VISIT_TIME <= selectedPlace.workingTime.second && selectedPlace.visited == false)
+        return true;
+    return false;
 }
 
 int find_visit_place_index(int &curTime, int &finishTime, vector<Place> &placesInfo)
 {
     int selectedPlaceIndex = NOT_FOUND;
-    for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-        if (is_open(curTime, placesInfo[placeIndex]) && is_visitable(curTime, placesInfo[placeIndex]) && placesInfo[placeIndex].visited == false)
-            selectedPlaceIndex = refind_selected_place_index(curTime, selectedPlaceIndex, placeIndex, placesInfo);
+    for (int i = 0; i < placesInfo.size(); i++)
+        if (curTime >= placesInfo[i].workingTime.first && is_visitable(curTime, placesInfo[i]))
+            selectedPlaceIndex = compare_open_places(selectedPlaceIndex, i, placesInfo);
+
     if (selectedPlaceIndex == NOT_FOUND)
-        for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-            if (curTime < placesInfo[placeIndex].workingTime.first && is_visitable(curTime, placesInfo[placeIndex]) && placesInfo[placeIndex].visited == false)
-                selectedPlaceIndex = refind_selected_place_index(curTime, selectedPlaceIndex, placeIndex, placesInfo);
+        for (int i = 0; i < placesInfo.size(); i++)
+            if (curTime < placesInfo[i].workingTime.first && is_visitable(curTime, placesInfo[i]))
+                selectedPlaceIndex = compare_still_closed_places(selectedPlaceIndex, i, placesInfo);
+
     if (selectedPlaceIndex != NOT_FOUND)
     {
         placesInfo[selectedPlaceIndex].visited = true;
-        change_start_finish_time(curTime, finishTime, placesInfo[selectedPlaceIndex]);
+        if (curTime + MOVE_DURATION < placesInfo[selectedPlaceIndex].workingTime.first)
+            curTime = placesInfo[selectedPlaceIndex].workingTime.first;
+        else
+            curTime += MOVE_DURATION;
+
+        if (placesInfo[selectedPlaceIndex].workingTime.second - curTime >= MAX_VISIT_TIME)
+            finishTime = curTime + MAX_VISIT_TIME;
+        else
+            finishTime = placesInfo[selectedPlaceIndex].workingTime.second;
     }
     return selectedPlaceIndex;
 }
