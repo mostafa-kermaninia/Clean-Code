@@ -99,26 +99,19 @@ vector<Place> read_input(string filePath)
     return placesInfo;
 }
 
+string convert_num_to_string(int num)
+{
+    if (num >= 10)
+        return to_string(num);
+    else
+        return "0" + to_string(num);
+}
+
 string convert_minutes_to_string(int input)
 {
-    string result = "";
-    int hours = input / MINUTES_OF_AN_HOUR, minutes = input % MINUTES_OF_AN_HOUR;
-
-    if (hours >= 10)
-        result += to_string(hours);
-    else
-    {
-        result += "0";
-        result += to_string(hours);
-    }
-    result += ":";
-    if (minutes >= 10)
-        result += to_string(minutes);
-    else
-    {
-        result += "0";
-        result += to_string(minutes);
-    }
+    int hours = input / MINUTES_OF_AN_HOUR;
+    int minutes = input % MINUTES_OF_AN_HOUR;
+    string result = convert_num_to_string(hours) + ":" + convert_num_to_string(minutes);
     return result;
 }
 
