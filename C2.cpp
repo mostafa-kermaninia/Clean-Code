@@ -37,14 +37,23 @@ int find_number_of_places(int numOfElements)
     return numOfPlaces;
 }
 
+int find_element_index(string element, vector<string> list)
+{
+    for (int i = 0; i < list.size(); i++)
+        if (element == list[i])
+            return i;
+    return NOT_FOUND;
+}
+
 vector<int> find_order_of_informations(vector<string> splittedInput)
 {
     vector<int> orderOfInfo;
     vector<string> properties = {"name", "openingTime", "closingTime", "rank"};
     for (int i = 0; i < PLACE_PROPERTIES_COUNT; i++)
-        for (int j = 0; j < PLACE_PROPERTIES_COUNT; j++)
-            if (properties[i] == splittedInput[j])
-                orderOfInfo.push_back(j);
+    {
+        int indexInSplittedInput = find_element_index(properties[i], splittedInput);
+        orderOfInfo.push_back(indexInSplittedInput);
+    }
     return orderOfInfo;
 }
 
