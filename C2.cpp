@@ -41,10 +41,10 @@ int find_number_of_places(int numOfElements)
     return numOfPlaces;
 }
 
-int find_element_index(string element, vector<string> list)
+int find_element_index(string element, vector<string> elements)
 {
-    for (int i = 0; i < list.size(); i++)
-        if (element == list[i])
+    for (int i = 0; i < elements.size(); i++)
+        if (element == elements[i])
             return i;
     return NOT_FOUND;
 }
@@ -108,6 +108,100 @@ vector<Place> read_input(string filePath)
     return placesInfo;
 }
 
+bool is_open(int &curTime, int placeIndex, vector<Place> placesInfo)
+{
+    if (curTime >= placesInfo[placeIndex].workingTime.first && curTime <= placesInfo[placeIndex].workingTime.second)
+        return true;
+    else
+        return false;
+}
+
+bool is_visitable(int &curTime, int placeIndex, vector<Place> placesInfo)
+{
+    if (curTime + MOVE_DURATION + MIN_VISIT_TIME <= placesInfo[placeIndex].workingTime.second)
+        return true;
+    else
+        return false;
+}
+
+int refind_selected_place_index(int curTime, int selectedPlaceIndex, int placeIndex, vector<Place> placesInfo)
+{
+    if (selectedPlaceIndex == NOT_FOUND)
+        return placeIndex;
+    else
+    {
+        if (curTime >= placesInfo[placeIndex].workingTime.first)
+            if (placesInfo[placeIndex].rank < placesInfo[selectedPlaceIndex].rank)
+                return placeIndex;
+            else
+                return selectedPlaceIndex;
+        else
+        {
+            if (placesInfo[placeIndex].workingTime.first < placesInfo[selectedPlaceIndex].workingTime.first)
+                return placeIndex;
+            if (placesInfo[placeIndex].workingTime.first == placesInfo[selectedPlaceIndex].workingTime.first)
+                if (placesInfo[placeIndex].rank < placesInfo[selectedPlaceIndex].rank)
+                    return placeIndex;
+            return selectedPlaceIndex;
+        }
+    }
+}
+
+void change_start_finish_time(int &start, int &finishTime, vector<Place> placesInfo, int visitIndex)
+{
+    if (start + MOVE_DURATION < placesInfo[visitIndex].workingTime.first)
+        start = placesInfo[visitIndex].workingTime.first;
+    else
+        start += MOVE_DURATION;
+
+    if (placesInfo[visitIndex].workingTime.second - start >= MAX_VISIT_TIME)
+        finishTime = start + MAX_VISIT_TIME;
+    else
+        finishTime = placesInfo[visitIndex].workingTime.second;
+}
+
+int find_visit_place_index(int &curTime, int &finishTime, vector<Place> &placesInfo)
+{
+    int selectedPlaceIndex = NOT_FOUND;
+    for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
+        if (is_open(curTime, placeIndex, placesInfo) && is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
+            selectedPlaceIndex = refind_selected_place_index(curTime, selectedPlaceIndex, placeIndex, placesInfo);
+    if (selectedPlaceIndex == NOT_FOUND)
+        for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
+            if (curTime < placesInfo[placeIndex].workingTime.first && is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
+                selectedPlaceIndex = refind_selected_place_index(curTime, selectedPlaceIndex, placeIndex, placesInfo);
+    if (selectedPlaceIndex != NOT_FOUND)
+    {
+        placesInfo[selectedPlaceIndex].visited = true;
+        change_start_finish_time(curTime, finishTime, placesInfo, selectedPlaceIndex);
+    }
+    return selectedPlaceIndex;
+}
+
+VisitDetails build_visit_struct(pair<int, int> visitDuration, string placeName)
+{
+    VisitDetails newVisit;
+    newVisit.placeName = placeName;
+    newVisit.visitDuration = visitDuration;
+    return newVisit;
+}
+
+vector<VisitDetails> build_visit_schedule(vector<Place> &placesInfo)
+{
+    vector<VisitDetails> visitsInfo;
+    int startOfCurVisit = START_TIME * MINUTES_OF_AN_HOUR - MOVE_DURATION;
+    int endOfVisit = START_TIME * MINUTES_OF_AN_HOUR;
+    int indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
+    while (indexOfPlaceToVisit != NOT_FOUND)
+    {
+        string placeName = placesInfo[indexOfPlaceToVisit].name;
+        visitsInfo.push_back(build_visit_struct({startOfCurVisit, endOfVisit}, placeName));
+        startOfCurVisit = endOfVisit;
+        indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
+    }
+    return visitsInfo;
+}
+
 string convert_num_to_string(int num)
 {
     if (num >= 10)
@@ -133,100 +227,6 @@ void print_output(vector<VisitDetails> visits)
              << convert_minutes_to_string(visits[i].visitDuration.second) << endl;
         cout << "---" << endl;
     }
-}
-
-bool is_open(int &curTime, int placeIndex, vector<Place> placesInfo)
-{
-    if (curTime >= placesInfo[placeIndex].workingTime.first && curTime <= placesInfo[placeIndex].workingTime.second)
-        return true;
-    else
-        return false;
-}
-
-bool is_visitable(int &curTime, int placeIndex, vector<Place> placesInfo)
-{
-    if (curTime + MOVE_DURATION + MIN_VISIT_TIME <= placesInfo[placeIndex].workingTime.second)
-        return true;
-    else
-        return false;
-}
-
-int change_where_to_visit_index(int curTime, int visitIndex, int placeIndex, vector<Place> placesInfo)
-{
-    if (visitIndex == NOT_FOUND)
-        return placeIndex;
-    else
-    {
-        if (curTime >= placesInfo[placeIndex].workingTime.first)
-            if (placesInfo[placeIndex].rank < placesInfo[visitIndex].rank)
-                return placeIndex;
-            else
-                return visitIndex;
-        else
-        {
-            if (placesInfo[placeIndex].workingTime.first < placesInfo[visitIndex].workingTime.first)
-                return placeIndex;
-            if (placesInfo[placeIndex].workingTime.first == placesInfo[visitIndex].workingTime.first)
-                if (placesInfo[placeIndex].rank < placesInfo[visitIndex].rank)
-                    return placeIndex;
-            return visitIndex;
-        }
-    }
-}
-
-void change_start_finish_time(int &start, int &finishTime, vector<Place> placesInfo, int visitIndex)
-{
-    if (start + MOVE_DURATION < placesInfo[visitIndex].workingTime.first)
-        start = placesInfo[visitIndex].workingTime.first;
-    else
-        start += MOVE_DURATION;
-
-    if (placesInfo[visitIndex].workingTime.second - start >= MAX_VISIT_TIME)
-        finishTime = start + MAX_VISIT_TIME;
-    else
-        finishTime = placesInfo[visitIndex].workingTime.second;
-}
-
-int find_visit_place_index(int &curTime, int &finishTime, vector<Place> &placesInfo)
-{
-    int visitIndex = NOT_FOUND;
-    for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-        if (is_open(curTime, placeIndex, placesInfo) && is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
-            visitIndex = change_where_to_visit_index(curTime, visitIndex, placeIndex, placesInfo);
-    if (visitIndex == NOT_FOUND)
-        for (int placeIndex = 0; placeIndex < placesInfo.size(); placeIndex++)
-            if (curTime < placesInfo[placeIndex].workingTime.first && is_visitable(curTime, placeIndex, placesInfo) && placesInfo[placeIndex].visited == false)
-                visitIndex = change_where_to_visit_index(curTime, visitIndex, placeIndex, placesInfo);
-    if (visitIndex >= 0)
-    {
-        placesInfo[visitIndex].visited = true;
-        change_start_finish_time(curTime, finishTime, placesInfo, visitIndex);
-    }
-    return visitIndex;
-}
-
-VisitDetails build_visit_struct(pair<int, int> visitDuration, string placeName)
-{
-    VisitDetails newVisit;
-    newVisit.placeName = placeName;
-    newVisit.visitDuration = visitDuration;
-    return newVisit;
-}
-
-vector<VisitDetails> build_visit_schedule(vector<Place> &placesInfo)
-{
-    vector<VisitDetails> visitsInfo;
-    int startOfCurVisit = START_TIME * MINUTES_OF_AN_HOUR - MOVE_DURATION;
-    int endOfVisit = START_TIME * MINUTES_OF_AN_HOUR;
-    int indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
-    while (indexOfPlaceToVisit != NOT_FOUND)
-    {
-        string placeName = placesInfo[indexOfPlaceToVisit].name;
-        visitsInfo.push_back(build_visit_struct({startOfCurVisit, endOfVisit}, placeName));
-        startOfCurVisit = endOfVisit;
-        indexOfPlaceToVisit = find_visit_place_index(startOfCurVisit, endOfVisit, placesInfo);
-    }
-    return visitsInfo;
 }
 
 int main(int argc, char *argv[])
