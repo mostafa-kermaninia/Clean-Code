@@ -31,9 +31,9 @@ struct Place
     int visited;
 };
 
-int find_number_of_places(vector<string> splittedInput)
+int find_number_of_places(int numOfElements)
 {
-    int numOfPlaces = splittedInput.size() / PLACE_PROPERTIES_COUNT - TITLE_ROW;
+    int numOfPlaces = numOfElements / PLACE_PROPERTIES_COUNT - TITLE_ROW;
     return numOfPlaces;
 }
 
@@ -50,15 +50,14 @@ vector<int> find_order_of_informations(vector<string> splittedInput)
 
 int convert_string_to_minutes(string stringTime)
 {
-    int minutes = 0;
-    minutes = stoi(stringTime.substr(0, 2)) * MINUTES_OF_AN_HOUR + stoi(stringTime.substr(3, 2));
+    int minutes = stoi(stringTime.substr(0, 2)) * MINUTES_OF_AN_HOUR + stoi(stringTime.substr(3, 2));
     return minutes;
 }
 
 vector<Place> convert_strvec_to_structvec(vector<string> inputString)
 {
     vector<Place> placesInfo;
-    int numberOfPlaces = find_number_of_places(inputString);
+    int numberOfPlaces = find_number_of_places(inputString.size());
     vector<int> orderOfInformations = find_order_of_informations(inputString);
     for (int placeIndex = 1; placeIndex <= numberOfPlaces; placeIndex++)
     {
