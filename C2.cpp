@@ -22,6 +22,7 @@ using namespace std;
 #define MIN_VISIT_TIME 15
 #define MAX_VISIT_TIME 60
 
+
 struct Place
 {
     string name;
@@ -36,16 +37,17 @@ struct VisitDetails
     pair<int, int> visitDuration;
 };
 
+
 int find_number_of_places(int numOfElements)
 {
     int numOfPlaces = numOfElements / PLACE_PROPERTIES_COUNT - TITLE_ROW;
     return numOfPlaces;
 }
 
-int find_element_index(string element, vector<string> elements)
+int find_element_index(string element, vector<string> list)
 {
-    for (int i = 0; i < elements.size(); i++)
-        if (element == elements[i])
+    for (int i = 0; i < list.size(); i++)
+        if (element == list[i])
             return i;
     return NOT_FOUND;
 }
@@ -108,6 +110,7 @@ vector<Place> read_input(string filePath)
     vector<Place> placesInfo = convert_to_place_vec(readFile);
     return placesInfo;
 }
+
 
 int compare_open_places(int selectedPlaceIndex, int curPlaceIndex, vector<Place> placesInfo)
 {
@@ -202,6 +205,7 @@ vector<VisitDetails> build_visit_schedule(vector<Place> &placesInfo)
     return visitsInfo;
 }
 
+
 string convert_num_to_string(int num)
 {
     if (num >= 10)
@@ -210,10 +214,10 @@ string convert_num_to_string(int num)
         return "0" + to_string(num);
 }
 
-string convert_minutes_to_string(int input)
+string convert_minutes_to_string(int inputMinutes)
 {
-    int hours = input / MINUTES_OF_AN_HOUR;
-    int minutes = input % MINUTES_OF_AN_HOUR;
+    int hours = inputMinutes / MINUTES_OF_AN_HOUR;
+    int minutes = inputMinutes % MINUTES_OF_AN_HOUR;
     string result = convert_num_to_string(hours) + ":" + convert_num_to_string(minutes);
     return result;
 }
@@ -228,6 +232,7 @@ void print_output(vector<VisitDetails> visits)
         cout << "---" << endl;
     }
 }
+
 
 int main(int argc, char *argv[])
 {
